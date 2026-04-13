@@ -51,6 +51,20 @@ def get_day_measurements():
     #flask muuttaa listan jsoniksi
     return jsonify(rows)
 
+#mittausten lukumäärä
+@app.get("/measurements/count")
+def get_count_measurements():
+    location_id = request.args.get("location_id")
+    query = "SELECT COUNT(*) AS count FROM measurement WHERE location_id = %s"
+    conn = _get_conn()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute(query, (location_id,))
+    row = cur.fetchone()
+    conn.close()
+    count = row["count"]
+
+    return jsonify({"location_id": location_id, "count": count})
+
 #ajetaan:
 if __name__ == "__main__":
     app.run(debug=True)
