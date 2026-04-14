@@ -19,6 +19,7 @@ def _get_conn():
     )
 
 #päivän mittaustulokset:
+#testaus selaimessa esim.: http://127.0.0.1:5000/measurements/day?location_id=2975&date=2026-01-15
 @app.get("/measurements/day")
 def get_day_measurements():
     location_id = request.args.get("location_id")
@@ -52,6 +53,7 @@ def get_day_measurements():
     return jsonify(rows)
 
 #mittausten lukumäärä
+#Testaus selaimeen: http://127.0.0.1:5000/measurements/count?location_id=2975
 @app.get("/measurements/count")
 def get_count_measurements():
     location_id = request.args.get("location_id")
@@ -64,6 +66,37 @@ def get_count_measurements():
     count = row["count"]
 
     return jsonify({"location_id": location_id, "count": count})
+
+
+# sensorin päivittäinen keskiarvo
+# esim. http://127.0.0.1:5000/measurements/avg?location_id=2975&sensor_id=2002989&date=2026-01-15
+@app.get("/measurements/avg")
+def get_sensor_avg():
+    location_id = request.args.get("location_id")
+    sensor_id = request.args.get("sensor_id")
+    date = request.args.get("date")
+
+    query = """
+        SELECT AVG(value)
+        FROM measurement
+        WHERE location_id = %s
+          AND sensor_id = %s
+          AND "datetimeUtc"::date = %s
+    """
+
+    conn = _get_conn()
+    cur = conn.cursor()
+    cur.execute(query, (location_id, sensor_id, date))
+    avg_val = cur.fetchone()[0]
+    conn.close()
+
+    return jsonify({
+        "location_id": location_id,
+        "sensor_id": sensor_id,
+        "date": date,
+        "average": avg_val
+    })
+
 
 #ajetaan:
 if __name__ == "__main__":
